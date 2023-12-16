@@ -1,0 +1,62 @@
+# Ergänzung zu meinem Start in Python
+
+print("Berechnen einer Potenz")
+a = int(input("Erste Zahl: "))
+b = int(input("Zweite Zahl: "))
+ergebnis_potenz = a**b
+print(str(a)+ " hoch " +str(b)+ " ergibt " +str(ergebnis_potenz)+ "\n")
+
+print("Berechnen einer Ganzzahldivision")
+c = int(input("Erste Zahl: "))
+d = int(input("Zweite Zahl: "))
+ergebnis_division = c//d
+print(str(c)+ " durch " +str(d)+ " ergibt " +str(ergebnis_division)+ "\n")
+
+print("Berechnen von Modulo (Rest einer Division) mit ganzen Zahlen")
+e = int(input("Erste ganze Zahl: "))
+f = int(input("Zweite ganze Zahl: "))
+ergebnis_modulog = e%f
+print(str(e)+ " durch " +str(f)+ " hat den Rest " +str(ergebnis_modulog)+ "\n")
+
+print("Berechnen von Modulo (Rest einer Division) mit Kommazahlen")
+g = float(input("Erste Kommazahl: "))
+h = float(input("Zweite Kommazahl: "))
+ergebnis_modulok = g%h
+print(str(g)+ " durch " +str(h)+ " hat den Rest " +str(ergebnis_modulok)+ "\n")
+
+print("Kurzschreibweisen (a+=b, a-=b, a*=b, a/=b, a//=b,a**=b, a%=b) von\n Zuweisungsoperatoren: a = a+b, a = a -b, a = a * b, a = a / b, a = a //b ,a = a ** b, a = a % b")
+x = 0
+x = x+100
+y = 0
+y+=100
+print("x=0; x= x+100; x= " +str(x)+ " ;y=0; y+=100; y= " +str(y)+ "\n")
+
+print("Logische Operatoren: and, or, not")
+age = 18
+points = 250
+
+print("age > 20 and points > 100")
+print(age > 20 and points > 100)
+print("age > 30 or points > 200")
+print(age > 30 or points > 200)
+print("not points > 500")
+print(not points > 500)
+
+print("Mehrere Verknüpfungen")
+credit = -25
+paid_by_neighbour = "Nein. Es reicht nicht. Der Nachbar zahlt"
+one_more_beer = (age >= 18) and (credit > 0 or paid_by_neighbour)
+print("Reicht das Geld für ein Bier?")
+print(str(one_more_beer))
+credit = credit+50
+one_more_beer = (age >= 18) and (credit > 0 or paid_by_neighbour)
+print("Budget wurde um 50 erhöht.\nReicht es jetzt für ein weiteres Bier? " +str(one_more_beer)+ "\n")
+
+print("Besonderheiten bei Verknüpfungen. Grenzen prüfen")
+age = 22
+grenze = age >= 18 and age <= 65
+age >= 18 and age <= 65
+print("Ist das Alter 22 größer gleich 18 und kleiner gleich 65? " +str(grenze))
+grenze2 = 18 <= age <= 65
+print("Darstellung in Python: 18 <= age <= 65 \n" +str(grenze2))
+
