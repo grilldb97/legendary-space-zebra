@@ -1,0 +1,13 @@
+from datetime import *
+uhrzeit_eingabe = input("Wie viel Uhr (HH:MM) ist es? ")
+
+uhrzeit = datetime.strptime(uhrzeit_eingabe, "%H:%M")
+
+if uhrzeit < datetime.strptime("12:00", "%H:%M"):
+    print("Guten Morgen")
+elif uhrzeit < datetime.strptime("18:00", "%H:%M"):
+    print("Guten Tag")
+elif uhrzeit < datetime.strptime("22:00", "%H:%M"):
+    print("Guten Abend")
+else:
+    print("Gute Nacht")
