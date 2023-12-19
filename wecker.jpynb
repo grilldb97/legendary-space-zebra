@@ -1,8 +1,15 @@
 from datetime import datetime
 import time
+import winsound
+
+wecker = input("Auf wann soll der Wecker gestellt werden?: ")
 
 while True:
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print(f"\r{current_time}", end="")
     time.sleep(1)
+    if current_time == wecker:
+        winsound.Beep(440, 500)
+
+
