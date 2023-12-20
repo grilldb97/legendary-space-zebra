@@ -1,15 +1,82 @@
-from datetime import datetime
 import time
+from datetime import datetime
+from tkinter import *
+import threading
+import colorama
+from colorama import *
 import winsound
 
-wecker = input("Auf wann soll der Wecker gestellt werden?: ")
+colorama.init()
 
-while True:
+
+def uhrzeit():
+    while True:
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print_thread = threading.Thread(target=print, args=(Fore.BLUE + Style.BRIGHT +
+                                                            f"\r{current_time}",), kwargs={'end': ""})
+        print_thread.start()
+        time.sleep(1)
+
+
+def uhrzeit_ohne_sekunden():
     now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    print(f"\r{current_time}", end="")
-    time.sleep(1)
-    if current_time == wecker:
-        winsound.Beep(440, 500)
+    current_time = now.strftime("%H:%M")  # Gibt die Uhrzeit ohne Sekunden zurück
+    return current_time
 
 
+def alarm():
+    freq = 500
+    for i in range(16):
+        freq -= 100
+        winsound.Beep(freq, 400)
+        freq += 100
+        winsound.Beep(freq, 150)
+
+
+def wecker(wecker_zeit):
+    while True:
+        current_time = datetime.now().strftime("%H:%M")  # Verwenden Sie die Funktion ohne Sekunden für den Vergleich
+        time.sleep(1)
+        if current_time == wecker_zeit:
+            # Erstellen Sie einen separaten Thread für den Alarm
+            alarm_thread = threading.Thread(target=alarm)
+            alarm_thread.start()
+            break
+
+
+def get_wecker_zeit():
+    # Erstellen Sie ein Fenster
+    window = Tk()
+    window.title("WECKER")
+    window.geometry("250x150")
+    # Fügen Sie Text hinzu
+    label = Label(window, text="Bitte geben Sie die Weckzeit ein")
+    label.pack()
+    # Erstellen Sie ein Eingabefeld
+    entry = Entry(window)
+    entry.pack()
+
+    def set_wecker_zeit():
+        wecker_zeit = entry.get()
+        window.destroy()
+        # Erstellen Sie einen separaten Thread für den Wecker
+        wecker_thread = threading.Thread(target=wecker, args=(wecker_zeit,))
+        wecker_thread.start()
+
+    # Erstellen Sie einen Button, der die Funktion aufruft
+    button = Button(window, text="Wecker stellen", command=set_wecker_zeit)
+    button.pack()
+    # Starten Sie die Ereignisschleife
+    window.mainloop()
+
+
+def main():
+    # Erstellen Sie einen separaten Thread für die Uhrzeit
+    uhrzeit_thread = threading.Thread(target=uhrzeit)
+    uhrzeit_thread.start()
+    get_wecker_zeit()
+
+
+if __name__ == "__main__":
+    main()
