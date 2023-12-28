@@ -1,5 +1,4 @@
-from alarms import Alarm
-from alarms import AlarmThreadManager
+import alarms
 from datetime import datetime
 from tkinter import *
 import threading
@@ -7,22 +6,53 @@ from functools import partial
 import tkinter as tk
 from tkinter import ttk
 from tkinter import StringVar
+from threading import Thread
 
 
 class GUI:
-    def __init__(self):
-        self.main_window = None  # Initialize here
-        self.set_button = None
+    def __init_(self):
+        # Erstelle die Alarmobjekte
+        self.alarms = [alarms.Alarm(i, alarm_manager=i) for i in range(3)]
+
+        # Starte die Alarmthreads
+        alarms.AlarmManager.start_alarm_manager()
+
+        # Richte einen Listener für das Setzen des Alarms ein
+        self.set_alarm_listener()
+
+        # Erstelle einen Listener für das Setzen des Alarms
+        self.set_alarm_event = Event()
 
     @staticmethod
-    def start(self):
-        self.main_window = MyWindow()  # Create window here
+    def start(create_window):
+        # Erstelle das Fenster
+        create_window()
+        # Starte den Hauptloop des Fensters
+        mainloop()
+    def set_alarm_listener(self):
+        # Richte einen Listener für das Drücken des Set-Alarm-Buttons ein
+        for tab in self.tabs:
+            tab.set_alarm_button.bind("<Button-1>", lambda event: self.set_alarm())
+
+        # Richte einen Listener für das Setzen des Alarms über die Spinboxes ein
+        for i in range(3):
+            self.stunden_spinboxes[i].bind("<ButtonRelease-1>", lambda event: self.set_alarm())
+            self.minuten_spinboxes[i].bind("<ButtonRelease-1>", lambda event: self.set_alarm())
+
     @staticmethod
-    def on_set_alarm(alarm_time):
-        AlarmThreadManager.schedule_alarm()
+    def on_set_alarm():
+        alarms.AlarmThreadManager.schedule_alarm()
 
     def set_alarm(self):
-        self.set_button = Button()  # Create button here
+        # Lies die Werte aus den Spinboxes
+        hours = self.stunden_spinboxes[self.active_tab].get()
+        minutes = self.minuten_spinboxes[self.active_tab].get()
+
+        # Erstelle einen neuen Alarm-Thread
+        alarm = alarms.Alarm(self.active_tab, hours, minutes)
+
+        # Übergebe den Alarm-Thread an den Alarmmanager
+        self.alarm_manager.schedule_alarm(alarm)
 
 
 class MyWindow:

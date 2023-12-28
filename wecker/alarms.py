@@ -1,5 +1,6 @@
-from ui import MyWindow
+import ui
 import threading
+from threading import Thread
 import time
 from datetime import datetime
 from tkinter import filedialog
@@ -14,23 +15,27 @@ snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
 # Globale Liste der Alarm-Threads
 alarm_threads = [threading.Thread(target=lambda: None) for _ in range(3)]
 
+
 class AlarmManager:
-    def __init__(self, alarm_threads):
+    def __init__(self):
         self.alarm_threads = alarm_threads
 
     def schedule_alarm(self, index, alarm_time):
         self.alarm_threads[index].schedule_alarm(alarm_time)
 
-    def start_alarm_manager(self):
-        for alarm_thread in self.alarm_threads:
+    @staticmethod
+    def start_alarm_manager():
+        for alarm_thread in alarm_threads:
             alarm_thread.start()
+
+
 class AlarmThreadManager:
     def __init__(self):
         self.alarm_queue = threading.Queue()
         self.alarm_threads = []
 
     def schedule_alarm(self, index, alarm_time):
-        alarm = AlarmThread(index, alarm_time)
+        alarm = ui.AlarmThread(index, alarm_time)
         self.alarm_threads.append(alarm)
         alarm.start()
 
@@ -122,4 +127,3 @@ class Alarm:
     def stop_alarm(self):
         if self.wecker_set:
             self.alarm_on = False
-
