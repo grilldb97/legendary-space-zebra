@@ -1,5 +1,5 @@
 from alarms import Alarm
-import wecker
+from alarms import AlarmThread
 from datetime import datetime
 from tkinter import *
 import threading
@@ -9,17 +9,35 @@ from tkinter import ttk
 from tkinter import StringVar
 
 
+class UI:
+    def __init__(self):
+        self.main_window = None # Initialize here
+        self.set_button = None
 
-class Window:
+    @staticmethod
+    def start(self):
+        self.main_window = MyWindow() # Create window here
+    @staticmethod
+    def on_set_alarm(alarm_time):
+        AlarmThread.schedule_alarm()
+
+    def set_alarm(self):
+        self.set_button = Button() # Create button here
+
+
+class MyWindow:
     pass
-    button_labels = [StringVar(Window.window, value="Alarm") for _ in range(3)]
+    my_window = MyWindow()
+    button_labels = [StringVar(MyWindow.window, value="Alarm") for _ in range(3)]
     window = Tk()
     window.title("WECKER")
     window.geometry("400x250")
     window.resizable(False, False)
     window.attributes('-toolwindow', True)
-    window = Window()
     alarm = Alarm()
+
+    # Erstellen Sie eine leere Liste von Tabs am Anfang Ihres Programms
+    tabs = []
 
     def __init__(self, alarm_objects, queue, threads):
         self.alarms = alarm_objects
@@ -35,30 +53,30 @@ class Window:
         self.alarm_queue = queue
         self.alarm_threads = threads
         self.create_window()
-
-    alarm.set_alarm_time()
-    alarm.schedule_alarm()
-
-    def start(self):
         # Create the main window
         self.main_window = tk.Tk()
 
-        # Set title and size
-        self.main_window.title("Alarm Clock")
-        self.main_window.geometry("400x300")
+        alarm.set_alarm_time()
+        alarm.schedule_alarm()
 
-        # Add UI elements like labels, buttons, etc
-        self.time_label = tk.Label(self.main_window, text="Set Time:")
-        self.time_label.pack()
+    def start(self):
+        # Set title
+        self.main_window.title("My App")
 
-        self.set_button = tk.Button(self.main_window, text="Set Alarm", command=self.set_alarm)
-        self.set_button.pack()
+        # Set size
+        self.main_window.geometry("800x600")
 
-        # Start the main event loop
+        # Add UI elements
+        label = tk.Label(self.main_window, text="Hello World")
+        label.pack()
+
+        # Start event loop
         self.main_window.mainloop()
 
-    def set_alarm(self):
-        # Callback to set the alarm time
+    def show_message(self, message):
+        msg_label = tk.Label(self.main_window, text=message)
+        msg_label.pack()
+
 
     @staticmethod
     def create_spinbox(time_frame, from_, to):
@@ -117,7 +135,7 @@ class Window:
         help_window.title("Hilfe")
         Label(help_window, text="Hier sind die Anweisungen...").pack()
 
-    def create_window(self):
+    def create_window(self, window):
         time_label = Label(self.window, textvariable=self.time_label, font=("Helvetica", 30, "bold"), fg="green")
         time_label.grid(row=0, column=1, pady=10)
 

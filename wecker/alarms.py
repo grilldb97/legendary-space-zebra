@@ -1,5 +1,5 @@
-import ui as window
-from threading import Thread
+from ui import MyWindow
+import threading
 import time
 from datetime import datetime
 from tkinter import filedialog
@@ -11,7 +11,11 @@ from tkinter import StringVar
 
 import wecker
 snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
+# Erstellen Sie eine globale Warteschlange
+alarm_queue = Queue()
 
+# Globale Liste der Alarm-Threads
+alarm_threads = [threading.Thread(target=lambda: None) for _ in range(3)]
 class Alarm:
     alarm_zeit = ""
     stunden_spinboxes = []
@@ -27,7 +31,7 @@ class Alarm:
         self.snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
         self.alarm_queue = queue
         self.alarm_threads = threads
-        self.button_labels = [StringVar(Window.window, value="Alarm") for _ in range(3)]
+        self.button_labels = [StringVar(MyWindow.window, value="Alarm") for _ in range(3)]
         alarms[i].button_labels = Window.button_labels
 
     def set_wecker_zeit(self, stunden, minuten):
@@ -168,3 +172,18 @@ class Alarm:
     # Starten Sie die Alarm-Threads
     for thread in alarm_threads:
         thread.start()
+
+class AlarmThread(threading.Thread):
+
+    def __init__(self, alarm_time):
+        threading.Thread.__init__(self)
+        self.alarm_time = alarm_time
+
+    def run(self):
+    # alarm logic here
+
+    @staticmethod
+    def schedule_alarm(alarm_time):
+        alarm = AlarmThread(alarm_time)
+        alarm.start()
+
