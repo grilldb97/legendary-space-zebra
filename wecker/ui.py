@@ -4,7 +4,11 @@ import threading
 from functools import partial
 from tkinter import ttk
 from tkinter import StringVar
+from alarms import Alarm
+
+alarm = Alarm()
 class Window:
+
     button_labels = [StringVar(Window.window, value="Alarm") for _ in range(3)]
     window = Tk()
     window.title("WECKER")
