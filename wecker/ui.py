@@ -1,5 +1,5 @@
 from alarms import Alarm
-from alarms import AlarmThread
+from alarms import AlarmThreadManager
 from datetime import datetime
 from tkinter import *
 import threading
@@ -9,131 +9,34 @@ from tkinter import ttk
 from tkinter import StringVar
 
 
-class UI:
+class GUI:
     def __init__(self):
-        self.main_window = None # Initialize here
+        self.main_window = None  # Initialize here
         self.set_button = None
 
     @staticmethod
     def start(self):
-        self.main_window = MyWindow() # Create window here
+        self.main_window = MyWindow()  # Create window here
     @staticmethod
     def on_set_alarm(alarm_time):
-        AlarmThread.schedule_alarm()
+        AlarmThreadManager.schedule_alarm()
 
     def set_alarm(self):
-        self.set_button = Button() # Create button here
+        self.set_button = Button()  # Create button here
 
 
 class MyWindow:
-    pass
-    my_window = MyWindow()
-    button_labels = [StringVar(MyWindow.window, value="Alarm") for _ in range(3)]
-    window = Tk()
-    window.title("WECKER")
-    window.geometry("400x250")
-    window.resizable(False, False)
-    window.attributes('-toolwindow', True)
-    alarm = Alarm()
-
-    # Erstellen Sie eine leere Liste von Tabs am Anfang Ihres Programms
-    tabs = []
 
     def __init__(self, alarm_objects, queue, threads):
+        self.window = None
         self.alarms = alarm_objects
         self.alarm_queue = queue
         self.alarm_threads = threads
-        self.time_label = StringVar()
-        self.time_label.set("00:00:00")
         self.tabs = []
         self.stunden_spinboxes = [None, None, None]
         self.minuten_spinboxes = [None, None, None]
 
-        self.alarms = alarm_objects
-        self.alarm_queue = queue
-        self.alarm_threads = threads
         self.create_window()
-        # Create the main window
-        self.main_window = tk.Tk()
-
-        alarm.set_alarm_time()
-        alarm.schedule_alarm()
-
-    def start(self):
-        # Set title
-        self.main_window.title("My App")
-
-        # Set size
-        self.main_window.geometry("800x600")
-
-        # Add UI elements
-        label = tk.Label(self.main_window, text="Hello World")
-        label.pack()
-
-        # Start event loop
-        self.main_window.mainloop()
-
-    def show_message(self, message):
-        msg_label = tk.Label(self.main_window, text=message)
-        msg_label.pack()
-
-
-    @staticmethod
-    def create_spinbox(time_frame, from_, to):
-        if from_ == to:
-            return None
-        return Spinbox(time_frame, from_=from_, to=to)
-
-    def create_tab(self, tab_control, index):
-        tab = ttk.Frame(tab_control)
-        tab_control.add(tab, text=f"Wecker {index + 1}")
-        self.tabs.append(tab)  # Fügen Sie den erstellten Tab zur Liste hinzu
-
-        time_frame = Frame(tab)
-        time_frame.place(relx=0.502, rely=0.1, anchor=CENTER)
-
-        # Create the spinboxes for hours and minutes
-        stunden_spinbox = self.create_spinbox(time_frame, 0, 23)
-        minuten_spinbox = self.create_spinbox(time_frame, 0, 59)
-
-        # Insert the spinboxes into the lists
-        self.stunden_spinboxes.append(stunden_spinbox)
-        self.minuten_spinboxes.append(minuten_spinbox)
-
-        # Position the spinboxes in their respective frames
-        stunden_spinbox.grid(row=0, column=0)
-        minuten_spinbox.grid(row=0, column=1)
-        self.create_button(tab, "Wecker stellen", partial(
-            self.alarms[index].set_wecker_zeit, self.stunden_spinboxes, self.minuten_spinboxes), 0.400, 0.4)
-
-        snooze_button = self.create_button(tab, "Snooze", partial(self.alarms[index].snooze,
-                                                                  self.alarm_queue), 0.605, 0.4)
-        snooze_button.config(bg="blue", fg="white")
-
-        stop_button = self.create_button(tab, "Stop", partial(
-            self.alarms[index].stop_alarm, index, self.stunden_spinboxes,
-            self.minuten_spinboxes, self.alarm_threads), 0.705, 0.4)
-        stop_button.config(bg="red", fg="white")
-
-        self.create_button(tab, "Wecker löschen", partial(
-            self.alarms[index].delete_alarm, index, self.stunden_spinboxes,
-            self.minuten_spinboxes, self.button_labels), 0.400, 0.7)
-
-        button = Button(tab, textvariable=self.button_labels[index],
-                        command=partial(self.alarms[index].wechsel_alarm_typ), width=10)
-        button.place(relx=0.650, rely=0.7, anchor=CENTER)
-
-    @staticmethod
-    def create_button(tab, text, command, relx, rely):
-        button = Button(tab, text=text, command=command)
-        button.place(relx=relx, rely=rely, anchor=CENTER)
-        return button
-
-    @staticmethod
-    def open_help_window():
-        help_window = Toplevel()
-        help_window.title("Hilfe")
-        Label(help_window, text="Hier sind die Anweisungen...").pack()
 
     def create_window(self, window):
         time_label = Label(self.window, textvariable=self.time_label, font=("Helvetica", 30, "bold"), fg="green")
@@ -164,7 +67,38 @@ class MyWindow:
         time_label.set(current_time)
         self.window.after(1000, self.uhrzeit, time_label)  # Planen Sie die nächste Aktualisierung in 1 Sekunde
 
-    @staticmethod
-    def mainloop():
-        pass
-        mainloop()
+    def create_tab(self, tab_control, index):
+        tab = ttk.Frame(tab_control)
+        tab_control.add(tab, text=f"Wecker {index + 1}")
+        self.tabs.append(tab)  # Fügen Sie den erstellten Tab zur Liste hinzu
+
+        time_frame = Frame(tab)
+        time_frame.place(relx=0.502, rely=0.1, anchor=CENTER)
+
+        # Create the spinboxes for hours and minutes
+        stunden_spinbox = self.create_spinbox(time_frame, 0, 23)
+        minuten_spinbox = self.create_spinbox(time_frame, 0, 59)
+
+        # Insert the spinboxes into the lists
+        self.stunden_spinboxes.append(stunden_spinbox)
+        self.minuten_spinboxes.append(minuten_spinbox)
+
+        self.create_button(tab, "Wecker stellen", partial(
+            self.alarms[index].set_wecker_zeit, self.stunden_spinboxes, self.minuten_spinboxes), 0.400, 0.4)
+
+        snooze_button = self.create_button(tab, "Snooze", partial(self.alarms[index].snooze,
+                                                                  self.alarm_queue), 0.605, 0.4)
+        snooze_button.config(bg="blue", fg="white")
+
+        stop_button = self.create_button(tab, "Stop", partial(
+            self.alarms[index].stop_alarm, index, self.stunden_spinboxes,
+            self.minuten_spinboxes, self.alarm_threads), 0.705, 0.4)
+        stop_button.config(bg="red", fg="white")
+
+        self.create_button(tab, "Wecker löschen", partial(
+            self.alarms[index].delete_alarm, index, self.stunden_spinboxes,
+            self.minuten_spinboxes, self.button_labels), 0.400, 0.7)
+
+        button = Button(tab, textvariable=self.button_labels[index],
+                        command=partial(self.alarms[index].wechsel_alarm_typ), width=10)
+        button.place(relx=0.650, rely=0.7, anchor=CENTER)

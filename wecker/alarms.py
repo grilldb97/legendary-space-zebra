@@ -9,42 +9,81 @@ import pygame
 import os
 from tkinter import StringVar
 
-import wecker
 snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
-# Erstellen Sie eine globale Warteschlange
-alarm_queue = Queue()
 
 # Globale Liste der Alarm-Threads
 alarm_threads = [threading.Thread(target=lambda: None) for _ in range(3)]
-class Alarm:
-    alarm_zeit = ""
-    stunden_spinboxes = []
-    minuten_spinboxes = []
 
-    def __init__(self, i, queue, threads):
-        self.index = i
+class AlarmManager:
+    def __init__(self, alarm_threads):
+        self.alarm_threads = alarm_threads
+
+    def schedule_alarm(self, index, alarm_time):
+        self.alarm_threads[index].schedule_alarm(alarm_time)
+
+    def start_alarm_manager(self):
+        for alarm_thread in self.alarm_threads:
+            alarm_thread.start()
+class AlarmThreadManager:
+    def __init__(self):
+        self.alarm_queue = threading.Queue()
+        self.alarm_threads = []
+
+    def schedule_alarm(self, index, alarm_time):
+        alarm = AlarmThread(index, alarm_time)
+        self.alarm_threads.append(alarm)
+        alarm.start()
+
+    def start_alarm_manager(self):
+        while True:
+            if not self.alarm_queue.empty():
+                index = self.alarm_queue.get()
+                alarm = self.alarm_threads[index]
+                while True:
+                    now = datetime.now()
+                    current_time = now.strftime("%H:%M")
+                    if alarm.alarm_time == current_time:
+                        alarm.alarm_on = True
+                        if alarm.alarm_typ == 0:
+                            alarm.alarm_mit_beep()
+                        else:
+                            alarm.alarm_mit_musik()
+                        threading.Thread(target=alarm.start_blinking).start()
+                        break
+                    time.sleep(1)
+                alarm.alarm_on = False
+                alarm.join()
+                self.alarm_threads.remove(alarm)
+
+
+class Alarm:
+    def __init__(self, index, alarm_manager):
+        self.index = index
+        self.alarm_manager = alarm_manager
+
         self.alarm_on = False
         self.wecker_zeit = ""
         self.wecker_set = False
         self.alarm_typ = 0
         self.musik_dateien = "nonexistent.mp3"
         self.snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
-        self.alarm_queue = queue
-        self.alarm_threads = threads
-        self.button_labels = [StringVar(MyWindow.window, value="Alarm") for _ in range(3)]
-        alarms[i].button_labels = Window.button_labels
 
-    def set_wecker_zeit(self, stunden, minuten):
-        if self.is_valid_time(stunden, minuten):
-            self.wecker_zeit = stunden + ":" + minuten
+    def set_alarm_time(self, hours, minutes):
+        if Alarm.valid_time(hours, minutes):
+            self.wecker_zeit = f"{hours}:{minutes}"
             self.wecker_set = True
+            self.alarm_manager.alarm_queue.put(self.index)
         else:
-            print("Bitte geben Sie eine gültige Zeit ein.")
+            print("Invalid time")
 
     @staticmethod
-    def is_valid_time(stunden, minuten):
-        return (all(s.isdigit() for s in stunden) and
-                all(m.isdigit() for m in minuten) and 0 <= int(stunden) < 24)
+    def valid_time(hours, minutes):
+        if hours < 0 or hours > 23:
+            return False
+
+        if minutes < 0 or minutes > 59:
+            return False
+        return True
 
     def snooze(self):
         if self.wecker_set:
@@ -52,7 +91,7 @@ class Alarm:
             snooze_time_in_seconds = self.snooze_time * 60
             time.sleep(snooze_time_in_seconds)
             if not self.alarm_on:
-                self.alarm_queue.put(self.index)
+                self.alarm_manager.alarm_queue.put(self.index)
 
     def waehle_musik(self):
         self.musik_dateien = filedialog.askopenfilename(filetypes=[("MP3 Files", "*.mp3")])
@@ -80,110 +119,7 @@ class Alarm:
             # Wenn die Musikdatei nicht existiert, verwenden Sie den Standard-Alarmton
             self.alarm_mit_beep()
 
-    def wechsel_alarm_typ(self):
-        self.alarm_typ = 1 - self.alarm_typ
-
-    def alarm_manager(self):
-        while True:
-            index = self.alarm_queue.get()
-            while True:
-                now = datetime.now()
-                current_time = now.strftime("%H:%M")
-                if self.wecker_zeit == current_time:
-                    break
-                time.sleep(1)
-            self.alarm_threads[index] = threading.Thread(target=self.alarm, args=(index,))
-            self.alarm_threads[index].daemon = True  # Mark the thread as a daemon
-            self.alarm_threads[index].start()
-            print(f"Alarm-Thread für Wecker {index+1} wurde gestartet")
-            self.alarm_queue.task_done()
-
-    def alarm(self, index):
-        if self.alarm_on:
-            if self.alarm_typ == 0:
-                self.alarm_mit_beep()
-            else:
-                self.alarm_mit_musik()
-            threading.Thread(target=self.start_blinking, args=(tabs[index],)).start()
-            self.alarm_queue.put(index)
-            while self.alarm_threads[index].is_alive():
-                time.sleep(0.1)
-            self.alarm_on = False
-            self.alarm_threads[index].join()
-
-    @staticmethod
-    def blink(tab):
-        current_color = tab.cget("background")  # Holt die aktuelle Hintergrundfarbe des Tabs
-        next_color = "red" if current_color == "white" else "white"
-        tab.config(background=next_color)  # Ändert die Hintergrundfarbe des Tabs
-
-    @staticmethod
-    def start_blinking(tab):
-        current_color = tab.cget("background")
-        next_color = "red" if current_color == "white" else "white"
-        for _ in range(10):
-            tab.config(background=next_color)
-            time.sleep(1)
-            next_color = "red" if next_color == "white" else "white"
-
-    def stop_alarm(self, index, stunden_spinboxes, minuten_spinboxes):
-        if self.wecker_set and index < len(self.stunden_spinboxes) and index < len(self.minuten_spinboxes):
-            self.alarm_on = False
-            if index < len(self.alarm_threads) and self.alarm_threads[index] is not None and alarm_threads[index].is_alive():
-                alarm_threads[index].join()
-            self.delete_alarm(index, stunden_spinboxes, minuten_spinboxes)  # Löscht den Wecker
-            stunden_spinboxes[index].delete(0, 'end')
-            minuten_spinboxes[index].delete(0, 'end')
-            stunden_spinboxes[index].insert(0, '0')
-            minuten_spinboxes[index].insert(0, '0')
-
-    def delete_alarm(self, index, stunden_spinboxes, minuten_spinboxes):
+    def stop_alarm(self):
         if self.wecker_set:
             self.alarm_on = False
-            self.wecker_set = False
-            stunden_spinboxes[index].delete(0, 'end')
-            minuten_spinboxes[index].delete(0, 'end')
-            stunden_spinboxes[index].insert(0, '0')
-            minuten_spinboxes[index].insert(0, '0')
-            stunden_spinboxes[index].config(state="normal")
-            minuten_spinboxes[index].config(state="normal")
-            button_labels[index].set("Alarm")
-            self.alarm_typ = 0
-
-    @staticmethod
-    def set_alarm_time(hours, minutes):
-        if not hours.valid_time and not minutes.valid_time:
-            print("Invalid time")
-            return
-
-            # Set alarm time
-    @staticmethod
-    def valid_time(hours, minutes):
-        # Check hours and minutes
-        if hours < 0 or hours > 23:
-            return False
-
-        if minutes < 0 or minutes > 59:
-            return False
-        return True
-
-
-
-    # Starten Sie die Alarm-Threads
-    for thread in alarm_threads:
-        thread.start()
-
-class AlarmThread(threading.Thread):
-
-    def __init__(self, alarm_time):
-        threading.Thread.__init__(self)
-        self.alarm_time = alarm_time
-
-    def run(self):
-    # alarm logic here
-
-    @staticmethod
-    def schedule_alarm(alarm_time):
-        alarm = AlarmThread(alarm_time)
-        alarm.start()
 
