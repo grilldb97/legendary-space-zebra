@@ -2,6 +2,8 @@ from ui import Window
 from alarms import Alarm
 import ui
 
+ui.start()
+
 # Erstellen Sie die StringVar-Objekte hier, nachdem das Fenster erstellt wurde
 global button_labels
 

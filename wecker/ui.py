@@ -1,22 +1,25 @@
+from alarms import Alarm
+import wecker
 from datetime import datetime
 from tkinter import *
 import threading
 from functools import partial
+import tkinter as tk
 from tkinter import ttk
 from tkinter import StringVar
-from alarms import Alarm
 
-alarm = Alarm()
-alarm.set_alarm_time()
-alarm.schedule_alarm()
+
+
 class Window:
-
+    pass
     button_labels = [StringVar(Window.window, value="Alarm") for _ in range(3)]
     window = Tk()
     window.title("WECKER")
     window.geometry("400x250")
     window.resizable(False, False)
     window.attributes('-toolwindow', True)
+    window = Window()
+    alarm = Alarm()
 
     def __init__(self, alarm_objects, queue, threads):
         self.alarms = alarm_objects
@@ -32,6 +35,30 @@ class Window:
         self.alarm_queue = queue
         self.alarm_threads = threads
         self.create_window()
+
+    alarm.set_alarm_time()
+    alarm.schedule_alarm()
+
+    def start(self):
+        # Create the main window
+        self.main_window = tk.Tk()
+
+        # Set title and size
+        self.main_window.title("Alarm Clock")
+        self.main_window.geometry("400x300")
+
+        # Add UI elements like labels, buttons, etc
+        self.time_label = tk.Label(self.main_window, text="Set Time:")
+        self.time_label.pack()
+
+        self.set_button = tk.Button(self.main_window, text="Set Alarm", command=self.set_alarm)
+        self.set_button.pack()
+
+        # Start the main event loop
+        self.main_window.mainloop()
+
+    def set_alarm(self):
+        # Callback to set the alarm time
 
     @staticmethod
     def create_spinbox(time_frame, from_, to):
@@ -97,8 +124,8 @@ class Window:
         uhrzeit_thread = threading.Thread(target=self.uhrzeit, args=(time_label,))
         uhrzeit_thread.start()
 
-        alarm_manager_thread = threading.Thread(target=alarm_threads[0].
-                                                alarm_manager, args=(alarm_queue, alarm_threads))
+        alarm_manager_thread = threading.Thread(target=self.alarm_threads[0].
+                                                alarm_manager, args=(self.alarm_queue, self.alarm_threads))
         alarm_manager_thread.start()
 
         tab_control = ttk.Notebook(self.window)

@@ -1,3 +1,5 @@
+import ui as window
+from threading import Thread
 import time
 from datetime import datetime
 from tkinter import filedialog
@@ -6,6 +8,8 @@ import winsound
 import pygame
 import os
 from tkinter import StringVar
+
+import wecker
 snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
 
 class Alarm:
@@ -44,7 +48,7 @@ class Alarm:
             snooze_time_in_seconds = self.snooze_time * 60
             time.sleep(snooze_time_in_seconds)
             if not self.alarm_on:
-                alarm_queue.put(self.index)
+                self.alarm_queue.put(self.index)
 
     def waehle_musik(self):
         self.musik_dateien = filedialog.askopenfilename(filetypes=[("MP3 Files", "*.mp3")])
@@ -97,11 +101,11 @@ class Alarm:
             else:
                 self.alarm_mit_musik()
             threading.Thread(target=self.start_blinking, args=(tabs[index],)).start()
-            alarm_queue.put(index)
-            while alarm_threads[index].is_alive():
+            self.alarm_queue.put(index)
+            while self.alarm_threads[index].is_alive():
                 time.sleep(0.1)
             self.alarm_on = False
-            alarm_threads[index].join()
+            self.alarm_threads[index].join()
 
     @staticmethod
     def blink(tab):
@@ -121,7 +125,7 @@ class Alarm:
     def stop_alarm(self, index, stunden_spinboxes, minuten_spinboxes):
         if self.wecker_set and index < len(self.stunden_spinboxes) and index < len(self.minuten_spinboxes):
             self.alarm_on = False
-            if index < len(alarm_threads) and alarm_threads[index] is not None and alarm_threads[index].is_alive():
+            if index < len(self.alarm_threads) and self.alarm_threads[index] is not None and alarm_threads[index].is_alive():
                 alarm_threads[index].join()
             self.delete_alarm(index, stunden_spinboxes, minuten_spinboxes)  # Löscht den Wecker
             stunden_spinboxes[index].delete(0, 'end')
@@ -142,27 +146,24 @@ class Alarm:
             button_labels[index].set("Alarm")
             self.alarm_typ = 0
 
+    @staticmethod
     def set_alarm_time(hours, minutes):
-        if not valid_time(hours, minutes):
+        if not hours.valid_time and not minutes.valid_time:
             print("Invalid time")
             return
 
             # Set alarm time
+    @staticmethod
     def valid_time(hours, minutes):
-         # Check if valid
-        return True/False
+        # Check hours and minutes
+        if hours < 0 or hours > 23:
+            return False
 
-    # Erstellen Sie eine globale Warteschlange
-    alarm_queue = Queue()
+        if minutes < 0 or minutes > 59:
+            return False
+        return True
 
-    # Erstellen Sie eine Liste von Threads
-    alarm_threads = [threading.Thread(target=lambda: None) for _ in range(3)]
 
-    # Erstellen Sie Ihre Alarm-Objekte
-    alarms = [Alarm(i, alarm_queue, alarm_threads) for i in range(3)]
-
-    # Erstellen Sie eine Instanz der Window-Klasse
-    window = Window(alarms, alarm_queue, alarm_threads)
 
     # Starten Sie die Alarm-Threads
     for thread in alarm_threads:
