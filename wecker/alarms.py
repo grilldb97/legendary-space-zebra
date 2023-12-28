@@ -142,6 +142,16 @@ class Alarm:
             button_labels[index].set("Alarm")
             self.alarm_typ = 0
 
+    def set_alarm_time(hours, minutes):
+        if not valid_time(hours, minutes):
+            print("Invalid time")
+            return
+
+            # Set alarm time
+    def valid_time(hours, minutes):
+         # Check if valid
+        return True/False
+
     # Erstellen Sie eine globale Warteschlange
     alarm_queue = Queue()
 
