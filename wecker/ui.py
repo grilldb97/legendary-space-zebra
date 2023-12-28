@@ -7,6 +7,8 @@ from tkinter import StringVar
 from alarms import Alarm
 
 alarm = Alarm()
+alarm.set_alarm_time()
+alarm.schedule_alarm()
 class Window:
 
     button_labels = [StringVar(Window.window, value="Alarm") for _ in range(3)]
