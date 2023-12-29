@@ -1,41 +1,59 @@
 # Alarm-Manager-Logik
 from datetime import datetime
-from threading import Thread
-
+import threading
+import logging
+import pygame
+logger = logging.getLogger(__name__)
 
 class Alarm:
+
     def __init__(self, alarm_index, hours, minutes):
+        self.validate_time(hours, minutes)
         self.alarm_index = alarm_index
-        self.hours = hours
-        self.minutes = minutes
+        self.timer = threading.Timer(interval, self.alarm_callback)
 
-    def run(self):
-        # Warte bis die Alarmzeit erreicht ist
-        while datetime.now().hour != self.hours or datetime.now().minute != self.minutes:
-            time.sleep(1)
+    def validate_time(self, hours, minutes):
+        if hours < 0 or hours > 23:
+            raise ValueError("Hours must be 0-23")
+        if minutes < 0 or minutes > 59:
+            raise ValueError("Minutes must be 0-59")
 
-        # Spiele den Alarmton ab
-        # ...
+    def start(self, interval):
+        try:
+            self.timer.start()
+        except Exception as e:
+            logger.error("Error starting timer: %s", e)
 
-        # Setze den Alarm erneut
-        self.alarm_manager.schedule_alarm(self.alarm_index, self.hours, self.minutes)
+    def alarm_callback(self):
+        # Play alarm sound
+        pygame.mixer.music.load("alarm.mp3")
+        pygame.mixer.music.play()
 
+        # Reschedule the alarm
+        interval = 60 * 60 # 1 hour interval
+        self.start(interval)
+
+    # Stop the current alarm sound after some time
+        pygame.time.set_timer(pygame.USEREVENT, 30 * 1000) # 30 seconds
+
+    def handle_alarm_stop(self):
+        pygame.mixer.music.stop()
+        # Cancel timer
 
 class AlarmManager:
     def __init__(self):
-        self.alarm_threads = []
+        self._alarm_threads = []
 
-    def schedule_alarm(self, alarm_index, hours, minutes):
-        # Erstelle einen neuen Alarm-Thread
-        alarm = Alarm(alarm_index, hours, minutes)
+    def get_alarm_threads(self):
+        return self._alarm_threads
 
-        # Starte den Alarm-Thread
-        alarm_thread = Thread(target=alarm.run)
-        alarm_thread.daemon = True
-        alarm_thread.start()
-
-        # Füge den Alarm-Thread zur Liste der Alarm-Threads hinzu
-        self.alarm_threads.append(alarm_thread)
+    def schedule_alarm(self, alarm):
+        try:
+            thread = threading.Thread(target=alarm.run)
+            thread.start()
+            self._alarm_threads.append(thread)
+        except Exception as e:
+            logger.error("Error scheduling alarm: %s", e)
 
     def snooze_alarm(self, alarm_index):
         # Setze den Alarm für 10 Minuten zurück

@@ -3,24 +3,22 @@ import ui
 
 def main():
     # Erstelle das Fenster
-    window = ui.MyWindow()
-
-    # Starte den Hauptloop
-    window.mainloop()
-
-def set_alarm(index, hours, minutes):
-    # Speichere die Alarmzeit
-    ui.tabs[index].alarm_time = (hours, minutes)
+    ui.MyWindow()
 
 
-def snooze():
-    # Verschiebe den Alarm um 10 Minuten
-    ui.alarm_time = (ui.alarm_time[0], ui.alarm_time[1] + 10)
+class UIInterface:
+    def set_alarm_time(self, time):
+        pass
 
+def update_alarm_time(ui, hours, minutes):
+    ui.alarm_time = (hours, minutes)
 
-def stop_alarm():
-    # Setze die Alarmzeit auf None
-    ui.alarm_time = None
+def set_alarm(ui, index, hours, minutes):
+    update_alarm_time(ui, hours, minutes)
+
+def snooze(ui):
+    hours, minutes = ui.alarm_time
+    update_alarm_time(ui, hours, minutes + 10)
 
 
 def show_help():
