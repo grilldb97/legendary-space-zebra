@@ -1,29 +1,22 @@
-# Hauptprogramm - Wecker
-import ui
-
-def main():
-    # Erstelle das Fenster
-    ui.MyWindow()
+from gui import MainWindow  # Import MainWindow-Klasse aus gui.py
 
 
-class UIInterface:
-    def set_alarm_time(self, time):
-        pass
+class MainWecker:
+    # Der Konstruktor der MainWecker-Klasse
+    def __init__(self):
+        self.window = MainWindow()  # Instanz MainWindow-Klasse erstellen; speichern in self.window
 
-def update_alarm_time(ui, hours, minutes):
-    ui.alarm_time = (hours, minutes)
-
-def set_alarm(ui, index, hours, minutes):
-    update_alarm_time(ui, hours, minutes)
-
-def snooze(ui):
-    hours, minutes = ui.alarm_time
-    update_alarm_time(ui, hours, minutes + 10)
+    # Definieren Sie die Methode run_wecker, die die show_window-Methode der MainWindow-Klasse aufruft
+    def run_wecker(self):
+        # Rufen Sie die Methode show_window der MainWindow-Klasse auf
+        self.window.show_window()
 
 
-def show_help():
-    print("Hilfetext")
-
-
+# Überprüfen Sie, ob dieses Skript direkt ausgeführt wird (anstatt importiert zu werden)
 if __name__ == "__main__":
-    main()
+    # Erstellen Sie eine Instanz der MainWecker-Klasse
+    wecker = MainWecker()
+    # Rufen Sie die Methode run_wecker der MainWecker-Klasse auf
+    wecker.run_wecker()
+    # Starten Sie die Tkinter event loop, um das Fenster anzuzeigen und auf Benutzerinteraktionen zu reagieren
+    wecker.window.window.mainloop()
