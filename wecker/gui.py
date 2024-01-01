@@ -1,30 +1,26 @@
 from tkinter import *
 from tkinter import ttk
-from functions import SpinboxCreator
-from functions import ButtonFunctions
-from functions import Threads
-from help import HelpWindow
-from buttons import Buttons
-from functions import Threads
 
 from alarm import AlarmManager
+from buttons import Buttons
+from functions import ButtonFunctions
+from functions import SpinboxCreator
+from functions import Threads
+from help import HelpWindow
 
 
 class MainWindow:
     def __init__(self):
         self.help_window = HelpWindow()
         self.window = Tk()
-        self.alarm_manager = AlarmManager()
-        self.button_functions = ButtonFunctions(self.alarm_manager)
-        self.buttongui = Buttons(self.window, self.button_functions)
-        Threads.start_alarm_manager(self.alarm_manager)
         self.show_time()
-        self.buttongui.button_help()
-        self.stunden_spinboxes = []
-        self.minuten_spinboxes = []
+        self.buttons = []
         self.show_tabs()
 
-
+        # Erstellen Sie eine separate Instanz von Buttons nur für den Hilfeknopf
+        help_button_functions = ButtonFunctions(None)
+        help_buttons = Buttons(self.window, None, help_button_functions)
+        help_buttons.button_help()
 
 
     def show_window(self):
@@ -36,25 +32,29 @@ class MainWindow:
         self.window.grid_rowconfigure(1, weight=1)
 
 
-    def create_time_frame(self, parent):
-        stunden_spinbox = SpinboxCreator.create_spinbox(parent, 0, 23, 0, 0)
-        minuten_spinbox = SpinboxCreator.create_spinbox(parent, 0, 59, 0, 1)
-        self.stunden_spinboxes.append(stunden_spinbox)
-        self.minuten_spinboxes.append(minuten_spinbox)
-        # Positionieren Sie die Spinboxen
-        stunden_spinbox.place(relx=0.435, rely=0.1, anchor=CENTER)  # Ändern Sie die Werte von x und y entsprechend
-        minuten_spinbox.place(relx=0.435, rely=0.1, x=45,
-                              anchor=CENTER)  # Ändern Sie die Werte von x und y entsprechend
-
-    def show_tabs(self, button_functions=None):
+    def show_tabs(self):
         tab_control = ttk.Notebook(self.window)
-        tab_control.grid(row=1, column=1, pady=10, sticky='nsew')  # Fügt vertikalen
+        tab_control.grid(row=1, column=1, pady=10, sticky='nsew')
+
+        # Erstellen Sie eine separate Instanz von AlarmManager und ButtonFunctions für jedes Tab
+        alarm_manager = AlarmManager()
+        button_functions = ButtonFunctions(alarm_manager)
+
         for i in range(3):
             self.tab = ttk.Frame(tab_control)
             tab_control.add(self.tab, text=f"Wecker {i + 1}")
-            self.create_time_frame(self.tab)
-            self.buttongui = Buttons(self.tab, self.alarm_manager, button_functions)  # Erstellen Sie eine neue Buttons-Instanz für jedes Tab
+
+            # Erstellen Sie eine Buttons-Instanz für das aktuelle Tab und fügen Sie sie zur Liste hinzu
+            buttons = Buttons(self.tab, alarm_manager, button_functions)
+            self.buttons.append(buttons)
+
+            # Erstellen Sie das Zeitfenster und zeigen Sie die Schaltflächen an
+            buttons.create_time_frame(self.tab)
             self.show_buttons()
+
+        # Starten Sie den AlarmManager, nachdem alle Tabs erstellt wurden
+        Threads.start_alarm_manager(alarm_manager)
+
 
     def show_time(self):
         time_label = StringVar()
@@ -64,10 +64,11 @@ class MainWindow:
         Threads.start_uhrzeit(time_label)
 
     def show_buttons(self):
-        self.buttongui.button_stop()
-        self.buttongui.button_snooze()
-        for i in range(len(self.stunden_spinboxes)):
-            self.buttongui.button_wecker_stellen(i, self.stunden_spinboxes[i], self.minuten_spinboxes[i])
-        self.buttongui.button_delete()
-        self.buttongui.button_change_alarm_musik()
+        for buttons in self.buttons:
+            buttons.button_stop()
+            buttons.button_snooze()
+            for i in range(len(buttons.stunden_spinboxes)):
+                buttons.button_wecker_stellen(i, buttons.stunden_spinboxes[i], buttons.minuten_spinboxes[i])
+            buttons.button_delete()
+            buttons.button_change_alarm_musik()
 

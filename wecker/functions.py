@@ -5,6 +5,7 @@ import threading
 from tkinter import filedialog
 from alarm import AlarmManager
 from datetime import datetime, timedelta
+import tkinter as tk
 
 
 class SpinboxCreator:
@@ -44,15 +45,21 @@ class ButtonFunctions:
         self.alarm_on = False
         self.snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
         self.alarm_manager = alarm_manager
+        self.selected_mp3 = None  # Fügen Sie diese Zeile hinzu
+
     def function_delete(self):
         print("delete")
 
     def function_stellen(self, index, stunden_spinbox, minuten_spinbox):
+        # Abrufen der Weckzeit aus den Spinboxen
         stunden = stunden_spinbox.get()
         minuten = minuten_spinbox.get()
+        mode = self.get_current_mode()  # Rufen Sie die neue Methode hier auf
+        mp3_path = self.selected_mp3  # Rufen Sie den Pfad zur ausgewählten MP3-Datei ab
+        # Fügen Sie die Weckerzeit, den Modus und den MP3-Pfad direkt zum AlarmManager hinzu
+        self.alarm_manager.add_alarm(index, stunden, minuten, mode, mp3_path)
         # Deaktivieren Sie die Spinboxen
         SpinboxCreator.disable_spinboxes([stunden_spinbox, minuten_spinbox])
-
     def function_snooze(self):
         if self.wecker_set:
             self.alarm_on = False
@@ -69,20 +76,21 @@ class ButtonFunctions:
     def function_stop(self):
         print("stop")
 
+    def get_current_mode(self):
+        return self.change_button_text.get()
     def function_change(self):
-        if self.change_button_text.get() == "Alarm":
-            self.alarm_on = True  # Setzen Sie die Variable, die angibt, dass ein Alarm ausgegeben werden soll
-        elif self.change_button_text.get() == "Musik":
-            self.waehle_musik()  # Wählen Sie eine MP3-Datei aus
-            if self.musik_dateien != "nonexistent.mp3":  # Überprüfen Sie, ob eine Musikdatei ausgewählt wurde
+        if not self.alarm_on:  # Überprüfen Sie, ob der Alarm gesetzt ist
+            self.waehle_musik()
+            if self.selected_mp3:  # Überprüfen Sie, ob eine MP3-Datei ausgewählt wurde
+                self.alarm_manager.set_selected_mp3(self.selected_mp3)  # Aktualisieren Sie den MP3-Pfad im AlarmManager
                 self.change_button_text.set("Musik")
-                self.alarm_on = False  # Setzen Sie die Variable, die angibt, dass ein Alarm ausgegeben werden soll, auf False
-            else:
+                self.alarm_on = True
+            else:  # Wenn keine MP3-Datei ausgewählt wurde, bleibt der Modus auf "Alarm"
                 self.change_button_text.set("Alarm")
+                self.alarm_on = False
 
     def waehle_musik(self):
-        self.musik_dateien = filedialog.askopenfilename(filetypes=[("MP3 Files", "*.mp3")])
-
+        self.selected_mp3 = filedialog.askopenfilename(filetypes=[("MP3 Files", "*.mp3")])
 
 class Uhrzeit:
     def uhrzeit(self, time_label):
