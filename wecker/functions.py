@@ -6,19 +6,32 @@ from tkinter import filedialog
 from alarm import AlarmManager
 from datetime import datetime, timedelta
 import tkinter as tk
+from tkinter import messagebox
 
 
 class SpinboxCreator:
+    def __init__(self):
+        self.values = {}  # Ein Wörterbuch zum Speichern der Spinbox-Werte
     @staticmethod
-    def create_spinbox(parent, from_, to, row, column):
-        spinbox = Spinbox(parent, from_=from_, to=to, width=5)
-        spinbox.grid(row=row, column=column)  # Platziert in dem time_frame
+    def create_spinbox(self, parent, from_, to, row, colum, wecker_index):
+        # Erstellen Sie eine StringVar, um den Wert der Spinbox zu speichern
+        value = StringVar()
+        value.set(from_)  # Setzen Sie den Anfangswert der Spinbox
+        spinbox = Spinbox(from_=from_, to=to, width=5, textvariable=value)
+        spinbox.grid(row=row, column=colum)  # Platziert in dem time_frame
+
+        # Speichern Sie den Anfangswert in self.values
+        if wecker_index not in self.values:
+            self.values[wecker_index] = {}
+        self.values[wecker_index]['stunden'] = value.get()
+
+        # Aktualisieren Sie self.values jedes Mal, wenn der Wert geändert wird
+        value.trace("w", lambda *args: self.values[wecker_index].update({'stunden': value.get()}))
         return spinbox
 
-    @staticmethod
-    def disable_spinboxes(spinboxes):
-        for spinbox in spinboxes:
-            spinbox.config(state="disabled")
+    def disable_spinboxes(self, wecker_index):
+        # Deaktivieren Sie nur die Spinboxen, die zu einem bestimmten Wecker gehören
+        self.values[wecker_index] = None
 
 
 class Threads:
@@ -37,7 +50,7 @@ class Threads:
 
 
 class ButtonFunctions:
-    def __init__(self, alarm_manager):
+    def __init__(self, alarm_manager, buttons, spinbox_creator):
         self.change_button_text = StringVar()
         self.change_button_text.set("Alarm")
         self.wecker_zeit = None
@@ -46,35 +59,39 @@ class ButtonFunctions:
         self.snooze_time = 10  # Zeit in Minuten für die Snooze-Funktion
         self.alarm_manager = alarm_manager
         self.selected_mp3 = None  # Fügen Sie diese Zeile hinzu
-
+        self.buttons = buttons
+        self.spinbox_creator = spinbox_creator  # Speichern Sie eine Referenz auf die SpinboxCreator-Instanz
+        self.alarm_times = {}
     def function_delete(self):
         print("delete")
 
-    def function_stellen(self, index, stunden_spinbox, minuten_spinbox):
-        # Abrufen der Weckzeit aus den Spinboxen
-        stunden = stunden_spinbox.get()
-        minuten = minuten_spinbox.get()
-        mode = self.get_current_mode()  # Rufen Sie die neue Methode hier auf
-        mp3_path = self.selected_mp3  # Rufen Sie den Pfad zur ausgewählten MP3-Datei ab
-        # Fügen Sie die Weckerzeit, den Modus und den MP3-Pfad direkt zum AlarmManager hinzu
-        self.alarm_manager.add_alarm(index, stunden, minuten, mode, mp3_path)
-        # Deaktivieren Sie die Spinboxen
-        SpinboxCreator.disable_spinboxes([stunden_spinbox, minuten_spinbox])
-    def function_snooze(self):
+    def function_stellen(self, wecker_index):
+        # Überprüfen Sie, ob wecker_index in self.spinbox_creator.values ist, bevor Sie darauf zugreifen
+        if wecker_index in self.spinbox_creator.values:
+            stunden = self.spinbox_creator.values[wecker_index]['stunden']
+            minuten = self.spinbox_creator.values[wecker_index]['minuten']
+            alarm_time = f"{stunden}:{minuten}"
+            print(f"Wecker {wecker_index + 1} Zeit: {alarm_time}")
+            mp3_path = self.selected_mp3  # Rufen Sie den Pfad zur ausgewählten MP3-Datei ab
+            mode = self.get_current_mode()  # Rufen Sie die neue Methode hier auf
+            # Fügen Sie die Weckerzeit, den Modus und den MP3-Pfad direkt zum AlarmManager hinzu
+            self.alarm_manager.add_alarm(wecker_index, alarm_time, mode, mp3_path)
+            # Deaktivieren Sie die Spinboxen
+            self.spinbox_creator.disable_spinboxes(wecker_index)
+            self.buttons.button_delete().config(state='normal')
+        else:
+            print(f"Keine Spinboxen für wecker_index {wecker_index + 1} gefunden.")
+
+
+    def function_snooze(self, wecker_index):
         if self.wecker_set:
             self.alarm_on = False
-            # Konvertieren Sie die Weckerzeit in ein datetime-Objekt
-            wecker_time = datetime.strptime(self.wecker_zeit, "%H:%M")
-            # Fügen Sie 10 Minuten zur Weckerzeit hinzu
-            snooze_time = (wecker_time + timedelta(minutes=10)).time()
-            # Aktualisieren Sie die Weckerzeit
-            self.wecker_zeit = snooze_time.strftime("%H:%M")
-            # Aktualisieren Sie das Alarmereignis im AlarmManager
-            self.alarm_manager.update_alarm(self.wecker_zeit)
+            self.alarm_manager.snooze_alarm(wecker_index)
+            messagebox.showinfo("Snooze", "Der Wecker wurde um 10 Minuten verschoben.")
 
 
     def function_stop(self):
-        print("stop")
+        self.alarm_manager.alarm_sound.stop_alarm()
 
     def get_current_mode(self):
         return self.change_button_text.get()
