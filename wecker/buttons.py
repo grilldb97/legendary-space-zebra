@@ -1,14 +1,25 @@
 from tkinter import *
-from functions import ButtonFunctions, SpinboxCreator
+from functions import ButtonFunctions
+from spinboxes import Spinboxes
 from help import HelpWindow
+from alarm import AlarmManager
 
 
 class Buttons:
-    def __init__(self, parent, alarm_manager):
+    def __init__(self, parent, alarm_manager=None):
         self.parent = parent
-        self.spinbox_creator = SpinboxCreator()  # Erstellen Sie eine Instanz von SpinboxCreator
-        self.button_functions = ButtonFunctions(
-            alarm_manager, self, self.spinbox_creator)  # Übergeben Sie spinbox_creator an ButtonFunctions
+        self.spinbox_creator = Spinboxes()  # Erstellen Sie eine Instanz von SpinboxCreator
+
+        # Erstellen Sie eine Instanz von ButtonFunctions ohne alarm_manager
+        self.button_functions = ButtonFunctions(None, self, self.spinbox_creator)
+
+        # Erstellen Sie eine Instanz von AlarmManager, wenn sie nicht übergeben wurde
+        if alarm_manager is None:
+            alarm_manager = AlarmManager(self, self.button_functions)
+
+        # Weisen Sie die AlarmManager-Instanz der ButtonFunctions-Instanz zu
+        self.button_functions.alarm_manager = alarm_manager
+
         self.help_window = HelpWindow()
         self.alarm_manager = alarm_manager
         self.wecker = self.button_functions
@@ -17,11 +28,10 @@ class Buttons:
         self.minuten_spinboxes = []  # Erstellen Sie die Liste hier
 
 
-    def button_wecker_stellen(self, wecker_index):
-        # Erstellen Sie den Button
+    def button_wecker_stellen(self, tab_control, wecker_index):
         self.button_wecker_stellen_obj = Button(self.parent, text="stellen",
-                                                width=6, command=lambda:
-        self.button_functions.function_stellen(wecker_index))
+                                                width=6, command=lambda index=wecker_index: self.button_functions.
+                                                function_stellen(tab_control.index(tab_control.select())))
         self.button_wecker_stellen_obj.place(relx=0.420, rely=0.400, anchor=CENTER)
 
     def button_delete(self):
@@ -33,13 +43,14 @@ class Buttons:
     def button_snooze(self, wecker_index):
         self.button_snooze_obj = Button(self.parent, text="Snooze",
                                         command=lambda:
-                                        self.button_functions.function_snooze(wecker_index), state='disabled')
+                                        self.button_functions.function_snooze(), state='disabled')
         self.button_snooze_obj.place(relx=0.500, rely=0.300)
         self.button_snooze_obj.config(bg="blue", fg="white", anchor=CENTER)
         return self.button_snooze_obj
 
     def button_stop(self):
-        self.button_stop_obj = Button(self.parent, text="Stop", command=self.button_functions.function_stop, state='disabled')
+        self.button_stop_obj = Button(self.parent, text="Stop", command=self.button_functions.function_stop,
+                                      state='disabled')
         self.button_stop_obj.place(relx=0.500, rely=0.300, x=49.5)
         self.button_stop_obj.config(bg="red", fg="white", anchor=CENTER)
         return self.button_stop_obj
@@ -56,18 +67,13 @@ class Buttons:
         self.button_help_obj.place(relx=1, x=-2, y=2, anchor=NE)
 
     def create_time_frame(self, parent, wecker_index):
-        spinbox_creator = SpinboxCreator()
         # Erstellen Sie die Spinboxen für Stunden und Minuten
-        stunden_spinbox = spinbox_creator.create_spinbox(
-            parent, 0, 0,  23, 0, 0, wecker_index)
-        minuten_spinbox = spinbox_creator.create_spinbox(
-            parent, 0, 0, 59, 0, 0, wecker_index)
+        spinbox_stunden, spinbox_minuten = self.spinbox_creator.create_spinboxes(parent, wecker_index)
 
-        # Speichern Sie die Spinboxen in den entsprechenden Attributen
-        self.stunden_spinboxes[wecker_index] = stunden_spinbox
-        self.minuten_spinboxes[wecker_index] = minuten_spinbox
+        # Erstellen Sie einen Frame, um die Spinboxen zu halten
+        frame = Frame(parent)
+        frame.pack(side=TOP)  # Positionieren Sie den Frame am oberen Rand des Tabs
 
-        # Positionieren Sie die Spinboxen
-        stunden_spinbox.place(relx=0.435, rely=0.1, anchor=CENTER)
-        minuten_spinbox.place(relx=0.435, rely=0.1, x=45, anchor=CENTER)
-
+        # Positionieren Sie die Spinboxen im Frame
+        spinbox_stunden.pack(side=LEFT, padx=(150, 0), anchor='n')
+        spinbox_minuten.pack(side=LEFT, padx=(0, 150), anchor='n')

@@ -1,10 +1,7 @@
 from tkinter import *
 from tkinter import ttk
-
 from alarm import AlarmManager
 from buttons import Buttons
-from functions import ButtonFunctions
-from functions import SpinboxCreator
 from functions import Threads
 from help import HelpWindow
 
@@ -13,14 +10,14 @@ class MainWindow:
     def __init__(self):
         self.help_window = HelpWindow()
         self.window = Tk()
+        self.wecker_liste = list(range(3))
         self.show_time()
         self.buttons = []
-        self.show_tabs()
+        self.show_tabs(self.wecker_liste)
 
         # Erstellen Sie eine separate Instanz von Buttons nur für den Hilfeknopf
         help_buttons = Buttons(self.window, None)
         help_buttons.button_help()
-
 
     def show_window(self):
         self.window.title("WECKER")
@@ -30,31 +27,23 @@ class MainWindow:
         self.window.grid_columnconfigure(1, weight=1)
         self.window.grid_rowconfigure(1, weight=1)
 
+    def create_tab(self, tab_control, wecker_index):
+        tab = ttk.Frame(tab_control)
+        tab_control.add(tab, text=f"Wecker {wecker_index + 1}")
+        # Erstellen Sie eine Buttons-Instanz für das aktuelle Tab
+        buttons = Buttons(tab, None)
 
-    def show_tabs(self):
+        self.buttons.append(buttons)
+        # Erstellen Sie das Zeitfenster und zeigen Sie die Schaltflächen an
+        buttons.create_time_frame(tab, wecker_index)
+        self.show_buttons(tab_control, wecker_index)  # Übergeben Sie wecker_index an die show_buttons-Methode
+
+    def show_tabs(self, wecker_liste):
         tab_control = ttk.Notebook(self.window)
         tab_control.grid(row=1, column=1, pady=10, sticky='nsew')
 
-        for wecker_index in range(3):
-            self.tab = ttk.Frame(tab_control)
-            tab_control.add(self.tab, text=f"Wecker {wecker_index + 1}")
-
-            # Erstellen Sie eine Buttons-Instanz für das aktuelle Tab
-            buttons = Buttons(self.tab, None)
-
-            # Erstellen Sie eine Instanz von AlarmManager und übergeben Sie die Buttons-Instanz
-            alarm_manager = AlarmManager(buttons)
-
-            # Übergeben Sie die Buttons-Instanz an den AlarmManager
-            alarm_manager.set_buttons(buttons)
-
-            self.buttons.append(buttons)
-            # Erstellen Sie das Zeitfenster und zeigen Sie die Schaltflächen an
-            buttons.create_time_frame(self.tab, wecker_index)
-            self.show_buttons(wecker_index)  # Übergeben Sie wecker_index an die show_buttons-Methode
-
-            # Starten Sie den AlarmManager, nachdem alle Tabs erstellt wurden
-            Threads.start_alarm_manager(alarm_manager)
+        for wecker_index in wecker_liste:
+            self.create_tab(tab_control, wecker_index)
 
     def show_time(self):
         time_label = StringVar()
@@ -63,11 +52,10 @@ class MainWindow:
         label.grid(row=0, column=1, pady=10)  # Fügt vertikalen Abstand hinzu
         Threads.start_uhrzeit(time_label)
 
-    def show_buttons(self, wecker_index):
+    def show_buttons(self, tab_control, wecker_index):
         for buttons in self.buttons:
             buttons.button_stop()
             buttons.button_snooze(wecker_index)
-            buttons.button_wecker_stellen(wecker_index)
+            buttons.button_wecker_stellen(tab_control, wecker_index)
             buttons.button_delete()
             buttons.button_change_alarm_musik()
-
