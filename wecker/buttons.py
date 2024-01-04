@@ -3,6 +3,7 @@ from functions import ButtonFunctions
 from spinboxes import Spinboxes
 from help import HelpWindow
 from alarm import AlarmManager
+from global_state import global_state
 
 
 class Buttons:
@@ -27,7 +28,6 @@ class Buttons:
         self.stunden_spinboxes = []  # Erstellen Sie die Liste hier
         self.minuten_spinboxes = []  # Erstellen Sie die Liste hier
 
-
     def button_wecker_stellen(self, tab_control, wecker_index):
         self.button_wecker_stellen_obj = Button(self.parent, text="stellen",
                                                 width=6, command=lambda index=wecker_index: self.button_functions.
@@ -40,17 +40,18 @@ class Buttons:
         self.delete_button_obj.place(relx=0.420, rely=0.650, anchor=CENTER)
         return self.delete_button_obj
 
-    def button_snooze(self, wecker_index):
+    def button_snooze(self):
+        state = global_state.get_state()
         self.button_snooze_obj = Button(self.parent, text="Snooze",
-                                        command=lambda:
-                                        self.button_functions.function_snooze(), state='disabled')
+                                        command=self.button_functions.function_snooze, state=state)
         self.button_snooze_obj.place(relx=0.500, rely=0.300)
         self.button_snooze_obj.config(bg="blue", fg="white", anchor=CENTER)
         return self.button_snooze_obj
 
     def button_stop(self):
-        self.button_stop_obj = Button(self.parent, text="Stop", command=self.button_functions.function_stop,
-                                      state='disabled')
+        state = global_state.get_state()
+        self.button_stop_obj = Button(self.parent, text="Stop",
+                                      command=self.button_functions.function_stop, state=state)
         self.button_stop_obj.place(relx=0.500, rely=0.300, x=49.5)
         self.button_stop_obj.config(bg="red", fg="white", anchor=CENTER)
         return self.button_stop_obj
@@ -65,6 +66,13 @@ class Buttons:
     def button_help(self):
         self.button_help_obj = Button(self.parent, text="?", command=self.help_window.help_content)
         self.button_help_obj.place(relx=1, x=-2, y=2, anchor=NE)
+
+    '''def update_button_states(self, wecker_index):
+        # Aktualisieren Sie den Zustand der "Stop" und "Snooze" Schaltflächen basierend auf dem Alarmzustand
+        state = NORMAL if global_state.get_state(wecker_index) else DISABLED
+        print(f"Updating button states to {state}")  # Debugging-Ausgabe
+        self.alarm_manager.window.after(0, self.button_stop(wecker_index).config, {'state': state})
+        self.alarm_manager.window.after(0, self.button_snooze(wecker_index).config, {'state': state})'''
 
     def create_time_frame(self, parent, wecker_index):
         # Erstellen Sie die Spinboxen für Stunden und Minuten

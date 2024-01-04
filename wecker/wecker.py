@@ -4,6 +4,7 @@ from gui import MainWindow  # Import MainWindow-Klasse aus gui.py
 class MainWecker:
     # Der Konstruktor der MainWecker-Klasse
     def __init__(self):
+
         self.window = MainWindow()  # Instanz MainWindow-Klasse erstellen; speichern in self.window
 
     # Definieren Sie die Methode run_wecker, die die show_window-Methode der MainWindow-Klasse aufruft

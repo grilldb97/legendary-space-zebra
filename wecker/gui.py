@@ -1,9 +1,10 @@
 from tkinter import *
 from tkinter import ttk
-from alarm import AlarmManager
+from alarm import AlarmManager, AlarmSound
 from buttons import Buttons
-from functions import Threads
+from functions import Threads, ButtonFunctions
 from help import HelpWindow
+from spinboxes import Spinboxes
 
 
 class MainWindow:
@@ -18,6 +19,21 @@ class MainWindow:
         # Erstellen Sie eine separate Instanz von Buttons nur für den Hilfeknopf
         help_buttons = Buttons(self.window, None)
         help_buttons.button_help()
+
+        # Erstellen Sie eine Instanz von Spinboxes
+        self.spinbox_creator = Spinboxes()
+
+        # Erstellen Sie eine Instanz von ButtonFunctions
+        self.button_functions = ButtonFunctions(None, self, self.spinbox_creator)
+
+
+        # Erstellen Sie eine Instanz von AlarmManager
+        alarm_manager = AlarmManager(self.buttons, self.button_functions)
+
+        self.alarm_sound = AlarmSound()
+
+        # Starten Sie den AlarmManager in einem neuen Thread
+        Threads.start_alarm_manager(alarm_manager)
 
     def show_window(self):
         self.window.title("WECKER")
@@ -55,7 +71,7 @@ class MainWindow:
     def show_buttons(self, tab_control, wecker_index):
         for buttons in self.buttons:
             buttons.button_stop()
-            buttons.button_snooze(wecker_index)
+            buttons.button_snooze()
             buttons.button_wecker_stellen(tab_control, wecker_index)
             buttons.button_delete()
             buttons.button_change_alarm_musik()
