@@ -56,8 +56,7 @@ class Buttons:
         wecker_index = tab_control.index(tab_control.select())
         state = global_state.get_state(wecker_index)
         self.button_stop_obj = Button(self.parent, text="Stop",
-                                      command=lambda:
-                                      self.button_functions.function_stop(wecker_index, alarm_queue_tab),
+                                      command=lambda: self.button_functions.function_stop(),
                                       state=state)
         self.button_stop_obj.place(relx=0.500, rely=0.300, x=49.5)
         self.button_stop_obj.config(bg="red", fg="white", anchor=CENTER)

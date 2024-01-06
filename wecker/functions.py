@@ -49,19 +49,12 @@ class ButtonFunctions:
         else:
             print(f"Kein Wecker mit Index {wecker_index} gefunden.")
 
-    def function_stop(self, wecker_index, alarm_queue_tab):
-        # Überprüfen Sie, ob die Warteschlange leer ist
-        if not alarm_queue_tab.empty():
-            # Holen Sie das alarm_event aus der Warteschlange des jeweiligen Tabs
-            alarm_event = alarm_queue_tab.get()
-            if alarm_event is not None and alarm_event['is_playing']:
-                # Setzen Sie is_playing auf False
-                alarm_event['is_playing'] = False
-                print(f"alarm_event['is_playing'] is now {alarm_event['is_playing']}")  # Debugging-Ausgabe
-                # Stoppen Sie die Wiedergabe des Alarms
-                self.alarm_manager.alarm_sound.stop_play(wecker_index, alarm_event)
-        else:
-            print(f"Kein Alarm-Event für Wecker-Index {wecker_index} gefunden.")
+
+    def function_stop(self):
+        from alarm import AlarmManager
+        self.button_functions = ButtonFunctions(None, self, self.spinbox_creator)
+        alarm_manager = AlarmManager(self.buttons, self.button_functions)
+        alarm_manager.stop_play()
 
     '''def update_button_states(self, wecker_index, parent):
         from buttons import Buttons

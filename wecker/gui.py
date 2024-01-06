@@ -17,8 +17,8 @@ class MainWindow:
         self.window = Tk()
         self.wecker_liste = list(range(3))
         self.alarm_sound = AlarmSound()
-        self.alarm_queues_tabs = [queue.Queue() for _ in range(len(self.wecker_liste))]  # Erstellen Sie eine
-        # Warteschlange für jeden Wecker
+        # Erstellen Sie eineWarteschlange für jeden Wecker
+        self.alarm_queues_tabs = [queue.Queue() for _ in range(len(self.wecker_liste))]
         self.show_time()
         self.buttons = []
         self.show_tabs(self.wecker_liste)
@@ -36,13 +36,8 @@ class MainWindow:
         # Erstellen Sie eine Instanz von AlarmManager
         alarm_manager = AlarmManager(self.buttons, self.button_functions)
 
-        self.alarm_sound = AlarmSound()
-
         # Starten Sie den AlarmManager in einem neuen Thread
         Threads.start_alarm_manager(alarm_manager)
-
-        # Instanz - start_alarm
-        self.start_alarm = Threads()
 
     def show_window(self):
         self.window.title("WECKER")
@@ -75,14 +70,14 @@ class MainWindow:
                     while alarm_event['alarm_time'] != current_time:
                         time.sleep(1)
                         current_time = now.strftime("%H:%M")
+                    print("hier")
                     self.alarm_sound = AlarmSound
                     self.button_stop = Buttons.button_stop
                     self.button_snooze = Buttons.button_snooze
+                    mp3_path = alarm_event['mp3_path']
+                    mode = alarm_event['mode']
                     alarm_thread = threading.Thread(target=self.alarm_sound.run_play,
-                                                    args=(alarm_event['mode'], alarm_event['mp3_path'],
-                                                          self.button_stop,
-                                                          self.button_snooze,
-                                                          wecker_index, alarm_event))
+                                                    args=(mode, mp3_path))
                     alarm_thread.daemon = True
                     alarm_thread.start()
             time.sleep(1)
