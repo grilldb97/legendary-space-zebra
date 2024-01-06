@@ -1,14 +1,19 @@
 import queue
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from tkinter import *
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 
-from global_state import global_state
+from matplotlib import pyplot as plt
 
-# Globale Warteschlange
-alarm_queue = queue.Queue()
+
+class AlarmQueue:
+    def __init__(self):
+        self.alarm_queue_global = queue.Queue()
+
+
+global_alarm_queue_instance = AlarmQueue()
 
 
 class ButtonFunctions:
@@ -25,16 +30,8 @@ class ButtonFunctions:
         self.spinbox_creator = spinbox_creator  # Speichern Sie eine Referenz auf die SpinboxCreator-Instanz
         self.alarm_times = {}
 
-
-
     def function_delete(self):
-        # Entfernen Sie das Alarm-Event aus der globalen Warteschlange
-        while not alarm_queue.empty():
-            alarm_event = alarm_queue.get()
-            if alarm_event != self.alarm_manager.alarm_event:
-                alarm_queue.put(alarm_event)
-        # Setzen Sie die gesetzte Alarmzeit und die Spinboxen in dem jeweiligen Wecker zurück
-        self.alarm_manager.alarm_event['alarm_time'] = None
+        pass
 
     def function_stellen(self, wecker_index):
         if wecker_index in self.spinbox_creator.spinboxes:
@@ -43,25 +40,28 @@ class ButtonFunctions:
             mp3_path = self.selected_mp3
             mode = self.get_current_mode()
             # Fügen Sie das Alarm-Event zur globalen Warteschlange hinzu
-            alarm_queue.put({'wecker_index': wecker_index, 'alarm_time': alarm_time, 'mode': mode,
-                             'mp3_path': mp3_path})
+            global_alarm_queue_instance.alarm_queue_global.put(
+                {'wecker_index': wecker_index, 'alarm_time': alarm_time, 'mode': mode,
+                 'mp3_path': mp3_path, 'is_playing': False})
             self.spinbox_creator.disable_spinboxes(wecker_index)
             self.buttons.button_delete().config(state='normal')
             self.buttons.button_wecker_stellen_obj.config(state='disabled')
         else:
             print(f"Kein Wecker mit Index {wecker_index} gefunden.")
 
-    def function_snooze(self):
-        # Verschieben Sie die Alarmzeit um 10 Minuten
-        alarm_time = datetime.strptime(self.alarm_manager.alarm_event['alarm_time'], "%H:%M")
-        snoozed_time = (alarm_time + timedelta(minutes=10)).strftime("%H:%M")
-        self.alarm_manager.alarm_event['alarm_time'] = snoozed_time
-        # Aktualisieren Sie das Alarm-Event in der globalen Warteschlange
-        alarm_queue.put(self.alarm_manager.alarm_event)
-        messagebox.showinfo("Snooze", "Der Wecker wurde um 10 Minuten verschoben.")
-
-    def function_stop(self):
-        self.alarm_manager.alarm_sound.stop_alarm()
+    def function_stop(self, wecker_index, alarm_queue_tab):
+        # Überprüfen Sie, ob die Warteschlange leer ist
+        if not alarm_queue_tab.empty():
+            # Holen Sie das alarm_event aus der Warteschlange des jeweiligen Tabs
+            alarm_event = alarm_queue_tab.get()
+            if alarm_event is not None and alarm_event['is_playing']:
+                # Setzen Sie is_playing auf False
+                alarm_event['is_playing'] = False
+                print(f"alarm_event['is_playing'] is now {alarm_event['is_playing']}")  # Debugging-Ausgabe
+                # Stoppen Sie die Wiedergabe des Alarms
+                self.alarm_manager.alarm_sound.stop_play(wecker_index, alarm_event)
+        else:
+            print(f"Kein Alarm-Event für Wecker-Index {wecker_index} gefunden.")
 
     '''def update_button_states(self, wecker_index, parent):
         from buttons import Buttons
@@ -73,8 +73,6 @@ class ButtonFunctions:
         print(f"Updating button states to {state}")  # Debugging-Ausgabe
         self.buttons.button_stop_obj.config(state='state')
         self.buttons.button_snooze_obj.config(state='state')'''
-
-
 
     def get_current_mode(self):
         return self.change_button_text.get()
@@ -107,11 +105,6 @@ class Threads:
         alarm_manager_thread.daemon = True
         alarm_manager_thread.start()
 
-    @staticmethod
-    def start_alarm(alarm_sound, mode, mp3_path):
-        alarm_thread = threading.Thread(target=alarm_sound.run_play, args=(mode, mp3_path,))
-        alarm_thread.daemon = True
-        alarm_thread.start()
 
 
 class Uhrzeit:
@@ -129,5 +122,3 @@ class Uhrzeit:
             time_label.set(current_time)
             time.sleep(1)
 
-    def get_current_time(self):
-        return self.time_label.get()[:5]

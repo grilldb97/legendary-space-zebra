@@ -1,37 +1,43 @@
+import queue
 import time
 import winsound
 from pygame import mixer
-from functions import alarm_queue, Threads, Uhrzeit
-from tkinter import *
-
-
+from functions import Uhrzeit, global_alarm_queue_instance
 
 
 class AlarmSound:
     def __init__(self):
+        self.is_playing = {}
         mixer.init()
 
+    def run_play(self, mode, mp3_path, button_stop, button_snooze, wecker_index, alarm_event):
+        alarm_event['is_playing'] = True
+        while alarm_event['is_playing']:
+            if mode == "Alarm":
+                self.play_alarm(wecker_index, alarm_event)
+            else:
+                self.play_mp3(mp3_path, wecker_index)
+            time.sleep(1)  # Warten Sie eine Sekunde, bevor Sie erneut überprüfen, ob der Alarm gestoppt wurde
 
-    def run_play(self, mode, mp3_path, button_stop, button_snooze):
-        button_stop.config(state='normal')
-        button_snooze.config(state='normal')
-        if mode == "Alarm":
-            self.play_alarm()
-        else:
-            self.play_mp3(mp3_path)
-
-
-    def play_alarm(self):
-
+    @staticmethod
+    def play_alarm(wecker_index, alarm_event):
         freq = 500
         for _ in range(10):
+            if not alarm_event['is_playing']:
+                break
             winsound.Beep(freq, 400)
             winsound.Beep(freq + 100, 150)
             time.sleep(1)
 
-    def play_mp3(self, mp3_path):
+    @staticmethod
+    def play_mp3(mp3_path, wecker_index):
         mixer.music.load(mp3_path)
         mixer.music.play()
+
+    @staticmethod
+    def stop_play(wecker_index, alarm_event):
+        print(f"stop_play called for wecker_index {wecker_index}")  # Debugging-Ausgabe
+        alarm_event['is_playing'] = False
 
 
 class AlarmManager:
@@ -42,17 +48,19 @@ class AlarmManager:
         self.alarm_sound = AlarmSound()
         self.uhrzeit = Uhrzeit()
         self.uhrzeit.uhrzeit_thread.start()
+        self.alarm_queue_instance = global_alarm_queue_instance
+
 
     def manage_alarms(self):
         while True:
-            current_time = self.uhrzeit.get_current_time()
-            # Überprüfen Sie, ob ein Alarm-Event in der Warteschlange ist
-            if not alarm_queue.empty():
-                alarm_event = alarm_queue.get()
-                while alarm_event['alarm_time'] != current_time:
-                    time.sleep(1)  # Warte für eine Sekunde
-                    current_time = self.uhrzeit.get_current_time()  # Aktualisiere die aktuelle Zeit
-                # Wenn die Alarmzeit gleich der aktuellen Zeit ist, starten Sie den Alarm
-                Threads.start_alarm(self.alarm_sound, alarm_event['mode'], alarm_event['mp3_path'])
-                # Markieren Sie das Alarm-Event als erledigt
-                alarm_queue.task_done()
+            # Überprüfen Sie, ob die Warteschlange leer ist
+            if not self.alarm_queue_instance.alarm_queue_global.empty():
+                # Holen Sie das nächste alarm_event aus der Warteschlange
+                alarm_event = self.alarm_queue_instance.alarm_queue_global.get()
+                alarm_event['is_playing'] = True
+                # Holen Sie den wecker_index aus dem alarm_event
+                wecker_index = alarm_event['wecker_index']
+                # Fügen Sie das alarm_event in den entsprechenden alarm_queue_tab ein
+                self.buttons[wecker_index].alarm_queue_tab.put(alarm_event)
+
+

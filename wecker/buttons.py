@@ -7,7 +7,7 @@ from global_state import global_state
 
 
 class Buttons:
-    def __init__(self, parent, alarm_manager=None):
+    def __init__(self, parent, window, alarm_manager=None):
         self.parent = parent
         self.spinbox_creator = Spinboxes()  # Erstellen Sie eine Instanz von SpinboxCreator
 
@@ -28,10 +28,11 @@ class Buttons:
         self.stunden_spinboxes = []  # Erstellen Sie die Liste hier
         self.minuten_spinboxes = []  # Erstellen Sie die Liste hier
 
-    def button_wecker_stellen(self, tab_control, wecker_index):
+    def button_wecker_stellen(self, tab_control):
+        wecker_index = tab_control.index(tab_control.select())
         self.button_wecker_stellen_obj = Button(self.parent, text="stellen",
-                                                width=6, command=lambda index=wecker_index: self.button_functions.
-                                                function_stellen(tab_control.index(tab_control.select())))
+                                                width=6, command=lambda: self.button_functions.
+                                                function_stellen(wecker_index))
         self.button_wecker_stellen_obj.place(relx=0.420, rely=0.400, anchor=CENTER)
 
     def button_delete(self):
@@ -40,18 +41,24 @@ class Buttons:
         self.delete_button_obj.place(relx=0.420, rely=0.650, anchor=CENTER)
         return self.delete_button_obj
 
-    def button_snooze(self):
-        state = global_state.get_state()
+    def button_snooze(self, tab_control):
+        wecker_index = tab_control.index(tab_control.select())
+        state = global_state.get_state(wecker_index)
         self.button_snooze_obj = Button(self.parent, text="Snooze",
-                                        command=self.button_functions.function_snooze, state=state)
+                                        command=lambda:
+                                        self.button_functions.function_snooze(wecker_index),
+                                        state=state)
         self.button_snooze_obj.place(relx=0.500, rely=0.300)
         self.button_snooze_obj.config(bg="blue", fg="white", anchor=CENTER)
         return self.button_snooze_obj
 
-    def button_stop(self):
-        state = global_state.get_state()
+    def button_stop(self, tab_control):
+        wecker_index = tab_control.index(tab_control.select())
+        state = global_state.get_state(wecker_index)
         self.button_stop_obj = Button(self.parent, text="Stop",
-                                      command=self.button_functions.function_stop, state=state)
+                                      command=lambda:
+                                      self.button_functions.function_stop(wecker_index, alarm_queue_tab),
+                                      state=state)
         self.button_stop_obj.place(relx=0.500, rely=0.300, x=49.5)
         self.button_stop_obj.config(bg="red", fg="white", anchor=CENTER)
         return self.button_stop_obj

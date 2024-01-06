@@ -1,4 +1,6 @@
 from tkinter import Spinbox
+
+
 class Spinboxes:
     def __init__(self):
         self.spinboxes = {}
