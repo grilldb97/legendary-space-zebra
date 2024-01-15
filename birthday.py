@@ -1,7 +1,12 @@
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
 from kivy.lang import Builder
 from kivymd.app import MDApp
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import OneLineListItem, ThreeLineListItem
 from kivymd.uix.screen import Screen
 import sqlite3
+import datetime
 
 # KivyMD Layout
 KV = '''
@@ -55,18 +60,51 @@ ScreenManager:
                 pos_hint: {'center_x': 0.5}
 '''
 
+
+def insert_into_db(vorname, nachname, geburtstag):
+    verbindung = sqlite3.connect("datenbank1.db")
+    zeiger = verbindung.cursor()
+    zeiger.execute("""
+            INSERT INTO personen 
+                   VALUES (?,?,?)
+           """,
+                   (vorname, nachname, geburtstag)
+                   )
+    verbindung.commit()
+
+
 class MyApp(MDApp):
     def build(self):
         return Builder.load_string(KV)
 
     def on_start(self):
-        # Hier können Sie Ihre Datenbankoperationen durchführen, um die aktuellen Geburtstage zu erhalten
-        # Zum Beispiel:
-        # birthdays = self.get_birthdays_from_db()
-        # for birthday in birthdays:
-        #     self.root.ids.birthday_list.add_widget(MDLabel(text=birthday))
+        # Get today's date
+        global birthday_message
+        today = datetime.date.today()
+        # Format it in the same way as your database entries
+        formatted_today = today.strftime('%d.%m')
+        current_year = today.year
 
-        pass
+        # Connect to the database
+        verbindung = sqlite3.connect("datenbank1.db")
+        zeiger = verbindung.cursor()
+
+        # Execute a query to find any birthdays that match today's date
+        zeiger.execute("""
+                SELECT * FROM personen
+            """)
+
+        # Fetch all records
+        birthdays = zeiger.fetchall()
+
+        for birthday in birthdays:
+            vorname, nachname, geburtstag = birthday
+            geburtstag_date = datetime.datetime.strptime(geburtstag, '%d.%m.%Y')
+            if geburtstag_date.strftime('%d.%m') == formatted_today:
+                age = current_year - geburtstag_date.year
+                birthday_message = f"{vorname} {nachname} hat heute Geburtstag und ist jetzt {age} Jahre alt."
+
+        self.root.ids.birthday_list.add_widget(ThreeLineListItem(text=birthday_message))
 
     def submit_info(self):
         vorname = self.root.ids.vorname_input.text
@@ -95,16 +133,6 @@ class MyApp(MDApp):
         # self.delete_in_db(vorname, nachname, geburtstag)
         pass
 
-    def insert_into_db(self, vorname, nachname, geburtstag):
-        verbindung = sqlite3.connect("datenbank1.db")
-        zeiger = verbindung.cursor()
-        zeiger.execute("""
-                INSERT INTO personen 
-                       VALUES (?,?,?)
-               """,
-                       (vorname, nachname, geburtstag)
-                       )
-        verbindung.commit()
 
 if __name__ == '__main__':
     MyApp().run()
