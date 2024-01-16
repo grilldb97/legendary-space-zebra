@@ -3,11 +3,13 @@ from kivy.uix.label import Label
 from kivy.lang import Builder
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import OneLineListItem, ThreeLineListItem
+from kivymd.uix.list import ThreeLineListItem
 from kivymd.uix.screen import Screen
 import sqlite3
 import datetime
 
+verbindung = sqlite3.connect("datenbank1.db")
+zeiger = verbindung.cursor()
 # KivyMD Layout
 KV = '''
 ScreenManager:
@@ -38,18 +40,23 @@ ScreenManager:
             MDTextField:
                 id: geburtstag_input
                 hint_text: 'Geburtstag'
+            ScrollView:
+                MDList:
+                    id: result_list    
             MDRaisedButton:
                 text: 'Hinzufügen'
-                on_release: app.submit_info()
+                on_release: app.add_record()
                 pos_hint: {'center_x': 0.5}
             MDRaisedButton:
                 text: 'Suchen'
-                on_release: app.search_info()
-                pos_hint: {'center_x': 0.5}
+                on_release: app.search()
+                size_hint: 0.10, 0.025
+                pos_hint: {'top': 0.5 + self.size_hint[1]/2}
             MDRaisedButton:
                 text: 'Bearbeiten'
                 on_release: app.update_info()
-                pos_hint: {'center_x': 0.5}
+                size_hint: 0.10, 0.025
+                pos_hint: {'top': 0.5 + self.size_hint[1]/2}
             MDRaisedButton:
                 text: 'Löschen'
                 on_release: app.delete_info()
@@ -59,35 +66,35 @@ ScreenManager:
                 on_release: app.root.current = 'main'
                 pos_hint: {'center_x': 0.5}
 '''
-
-
-def insert_into_db(vorname, nachname, geburtstag):
-    verbindung = sqlite3.connect("datenbank1.db")
-    zeiger = verbindung.cursor()
-    zeiger.execute("""
-            INSERT INTO personen 
-                   VALUES (?,?,?)
-           """,
-                   (vorname, nachname, geburtstag)
-                   )
-    verbindung.commit()
+vorname = ""
+nachname = ""
+geburtstag = ""
 
 
 class MyApp(MDApp):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.vorname = ""
+        self.nachname = ""
+        self.geburtstag = ""
+        self.verbindung = sqlite3.connect("datenbank1.db")
+        self.zeiger = self.verbindung.cursor()
+
     def build(self):
         return Builder.load_string(KV)
 
+    def input_fields(self):
+        self.vorname = self.root.ids.vorname_input.text
+        self.nachname = self.root.ids.nachname_input.text
+        self.geburtstag = self.root.ids.geburtstag_input.text
+        return vorname, nachname, geburtstag
+
     def on_start(self):
         # Get today's date
-        global birthday_message
         today = datetime.date.today()
         # Format it in the same way as your database entries
         formatted_today = today.strftime('%d.%m')
         current_year = today.year
-
-        # Connect to the database
-        verbindung = sqlite3.connect("datenbank1.db")
-        zeiger = verbindung.cursor()
 
         # Execute a query to find any birthdays that match today's date
         zeiger.execute("""
@@ -96,36 +103,82 @@ class MyApp(MDApp):
 
         # Fetch all records
         birthdays = zeiger.fetchall()
-
+        birthday_message = ''
         for birthday in birthdays:
-            vorname, nachname, geburtstag = birthday
-            geburtstag_date = datetime.datetime.strptime(geburtstag, '%d.%m.%Y')
-            if geburtstag_date.strftime('%d.%m') == formatted_today:
-                age = current_year - geburtstag_date.year
-                birthday_message = f"{vorname} {nachname} hat heute Geburtstag und ist jetzt {age} Jahre alt."
+            self.vorname, self.nachname, self.geburtstag = birthday
+            if self.geburtstag:
+                geburtstag_date = datetime.datetime.strptime(self.geburtstag, '%d.%m.%Y')
+                if geburtstag_date.strftime('%d.%m') == formatted_today:
+                    age = current_year - geburtstag_date.year
+                    birthday_message = (f"{self.vorname} {self.nachname} "
+                                        f"hat heute Geburtstag und ist jetzt {age} Jahre alt.")
 
-        self.root.ids.birthday_list.add_widget(ThreeLineListItem(text=birthday_message))
+        self.root.ids.result_list.add_widget(ThreeLineListItem(text=birthday_message))
+        verbindung.commit()
 
-    def submit_info(self):
-        vorname = self.root.ids.vorname_input.text
-        nachname = self.root.ids.nachname_input.text
-        geburtstag = self.root.ids.geburtstag_input.text
-        # Hier können Sie Ihre Datenbankoperationen durchführen
-        # Zum Beispiel:
-        # self.insert_into_db(vorname, nachname, geburtstag)
-        print(f'Vorname: {vorname}, Nachname: {nachname}, Geburtstag: {geburtstag}')
+    def add_record(self):
+        zeiger.execute("""
+                    INSERT INTO personen 
+                           VALUES (?,?,?)
+                   """,
+                       (self.vorname, self.nachname, self.geburtstag)
+                       )
+        zeiger.execute("""
+                SELECT * FROM personen WHERE 
+                vorname == ? AND 
+                nachname == ? AND 
+                geburtstag == ?
+            """, (self.vorname, self.nachname, self.geburtstag))
+        inhalt = zeiger.fetchall()
+        print(inhalt, "wurde der Datenbank hinzugefügt")
+        verbindung.commit()
+        print(f'Vorname: {self.vorname}, Nachname: {self.nachname}, Geburtstag: {self.geburtstag}')
 
-    def search_info(self):
-        # Hier können Sie Ihre Datenbankoperationen durchführen
-        # Zum Beispiel:
-        # self.search_in_db(vorname, nachname, geburtstag)
-        pass
 
-    def update_info(self):
-        # Hier können Sie Ihre Datenbankoperationen durchführen
-        # Zum Beispiel:
-        # self.update_in_db(vorname, nachname, geburtstag)
-        pass
+    def search(self):
+        # Platzhalter bei leerer Eingabe
+        if not self.vorname:
+            self.vorname = '%'
+        else:
+            self.vorname += '%'  # Erlaube Wildcards am Ende
+        if not self.nachname:
+            self.nachname = '%'
+        else:
+            self.nachname += '%'  # Erlaube Wildcards am Ende
+        if not self.geburtstag:
+            self.geburtstag = '%'
+        else:
+            self.geburtstag += '%'  # Erlaube Wildcards am Ende
+
+        zeiger.execute("""
+                SELECT * FROM personen WHERE 
+                vorname LIKE ? AND 
+                nachname LIKE ? AND 
+                geburtstag LIKE ?
+            """, (self.vorname, self.nachname, self.geburtstag))
+
+        inhalt_search = zeiger.fetchall()
+        results = '\n'.join([f"{i+1}. {x}" for i, x in enumerate(inhalt_search)])
+
+        # Erstellen Sie ein neues Label mit den Suchergebnissen als Text
+        results_label = MDLabel(text=results)
+
+        # Fügen Sie das Label zu Ihrem Layout hinzu
+        self.root.ids.result_list.add_widget(results_label)
+
+        return inhalt_search, self.vorname, self.nachname, self.geburtstag
+
+    def update(self):
+        global vorname, nachname, geburtstag
+        zeiger.execute(f"""
+        UPDATE personen 
+        SET {field_to_update} = ? 
+        WHERE vorname LIKE ? AND nachname LIKE ? AND geburtstag LIKE ?
+        """, (new_value, vorname, nachname, geburtstag))
+        print("Datensatz wurde aktualisiert.")
+        print(f"ALT: Vorname: {vorname_search}, Nachname: {nachname_search}, Geburtstag: {geburtstag_search}")
+        print(f"UPDATED: Vorname: {new_value}, Nachname: {nachname_search}, Geburtstag: {geburtstag_search}")
+        verbindung.commit()
 
     def delete_info(self):
         # Hier können Sie Ihre Datenbankoperationen durchführen
