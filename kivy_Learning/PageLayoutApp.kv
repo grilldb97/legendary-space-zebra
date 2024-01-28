@@ -1,0 +1,46 @@
+PageLayoutExample
+
+<PageLayoutExample@PageLayout>
+    BoxLayoutExample:
+    GridLayoutExample:
+    AnchorLayoutExample:
+
+<BoxLayoutExample@BoxLayout>:
+    orientation: 'vertical'
+    Button:
+        text: "vertical_Button"
+    BoxLayout:
+        Button:
+            text: "hori-"
+        Button:
+            text: "zontal"
+        Button:
+            text: "Buttons"
+
+
+<GridLayoutExample@GridLayout>:
+    # rows
+    # cols
+    cols: 2
+    rows: 3
+    Button:
+        text: "A"
+    Button:
+        text: "B"
+    Button:
+        text: "C"
+
+<AnchorLayoutExample@AnchorLayout>:
+    # right, left, center
+    anchor_x: "left"
+    # bottom, top, center
+    anchor_y: "bottom"
+    Button:
+        text: "A"
+        size_hint: .3, .3
+    Button:
+        text: "B"
+        size_hint: .2, .2
+    Button:
+        text: "C"
+        size_hint: .1, .1
