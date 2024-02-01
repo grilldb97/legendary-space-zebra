@@ -1,0 +1,17 @@
+WidgetsExample:
+
+<WidgetsExample>
+    cols: 3
+    ToggleButton:
+        text: "OFF"
+        on_state: root.on_toggle_button_state(self)
+        size_hint: None, 1
+    Button:
+        text: "Count"
+        on_press: root.on_button_click()
+        disabled: not root.count_enable
+    Label:
+        text: root.my_text
+        font_name: "fonts/Lcd.ttf"
+        font_size: "220dp"
+        color: 0, 0.8, 0, 1
