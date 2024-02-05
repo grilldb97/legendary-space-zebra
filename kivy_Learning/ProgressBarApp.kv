@@ -1,0 +1,14 @@
+WidgetsExample:
+
+<WidgetsExample>:
+    cols: 3
+    BoxLayout:
+        orientation: 'vertical'
+        Slider:
+            id: my_slider
+            orientation: "vertical"
+            min: 0
+            max: 100
+        ProgressBar:
+            max:
+            value: my_slider.value
