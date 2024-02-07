@@ -1,0 +1,12 @@
+WidgetsExample:
+
+<WidgetsExample>:
+    cols: 2
+    TextInput:
+        id: my_text_input
+        size_hint: None, 1
+        text: "foo"
+        multiline: False
+        on_text_validate: root.on_text_validate(self)
+    Label:
+        text: "Your name is " + root.text_input_str
